@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useImmer } from 'use-immer';
 
 import { muiXTelemetrySettings } from '@mui/x-license';
@@ -15,12 +15,15 @@ import BusyMessageModal from './BusyMessageModal';
 import TopBar from './TopBar';
 import Plot from './Plot';
 import Item from "./Item";
+import StatusBar from "./StatusBar";
+import useWatchdog from './useWatchdog';
 
 muiXTelemetrySettings.disableTelemetry();
 
 
 function App() {
   const [measurements, udpateMeasurements] = useImmer([]);
+  const [isOnline, setOnline] = useState(false);
   const [isPlotting, setPlotting] = useState(false);
   const [plotCursor, setPlotCursor] = useState(0);
   const [plotTimeOffset, setPlotTimeOffset] = useState(null);
@@ -30,6 +33,11 @@ function App() {
   const [temperature, setTemperature] = useState(null);
 
   const max_points = 500;
+  const watchDogTimeout = 2000;
+
+  const watchdogReset = useWatchdog(watchDogTimeout, () => {
+    setOnline(false);
+  });
 
   function weightUpdate(value, timeStamp) {
     let offset;
@@ -60,8 +68,10 @@ function App() {
           const data = JSON.parse(event.data);
           const value = data["value"];
           const timeStamp = event.timeStamp / 1000;
+          watchdogReset();
+          setOnline(true);
           callback(value, timeStamp);
-        }, {capture: false},
+        }, { capture: false },
       );
     }
     eventSource.onopen = () => { console.log("SSE /stream connected"); };
@@ -117,16 +127,21 @@ function App() {
       <BusyMessageModal busy={getBusyOperation()} />
       <TopBar />
 
-
       <Box sx={{ flexGrow: 1 }}>
         <Grid container spacing={2}>
+        <StatusBar
+          isOnline={isOnline}
+          scaleState={scaleState}
+          temperature={temperature}
+          error={error}
+        />
           <Grid size={12}>
             <Item>
               <Typography variant="h7" gutterBottom>
                 Weight:
               </Typography>
               <Typography variant="h1" gutterBottom={true}>
-                {weight == null ? "--" : weight < 100 ? weight.toFixed(1) :  weight.toFixed(0)} kg
+                {weight == null ? "--" : weight < 100 ? weight.toFixed(1) : weight.toFixed(0)} kg
               </Typography>
             </Item>
           </Grid>
@@ -147,13 +162,7 @@ function App() {
               <CalibrationButton calibration={api_call_start_calib} />
             </Stack>
           </Grid>
-          <Grid size={12}>
-            <Item>
-              <p>System Status: {scaleState}</p>
-              {error != "" ? <p>System Message: {error}</p> : ""}
-              <p>{temperature == null ? "" : temperature.toFixed(2) + " °C"}</p>
-            </Item>
-          </Grid>
+
         </Grid>
       </Box>
 

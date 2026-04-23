@@ -10,7 +10,7 @@ export default function TopBar({
 
 }) {
     return (
-        <AppBar position="static" sx={{ marginBottom: 4 }}>
+        <AppBar position="static" sx={{ marginBottom: 2 }}>
             <Toolbar>
                 <IconButton
                     size="large"
