@@ -18,7 +18,7 @@ class ScaleFSM {
   const unsigned int CALIB_TIMEOUT = 10000;
   const unsigned int TARE_AVERAGE_FACTOR = 40;
   const unsigned int CALIBRATION_AVERAGE_FACTOR = 40;
-  const unsigned int STREAM_AVERAGE_FACTOR = 10;
+  const unsigned int STREAM_AVERAGE_FACTOR = 3;
   const bool AUTO_START_STREAMING = true;
 
   typedef struct {

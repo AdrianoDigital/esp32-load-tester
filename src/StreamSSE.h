@@ -7,6 +7,8 @@
 class StreamSSE {
   // Implements streaming to clients via Server Side Events (SSE)
  private:
+  const bool print_to_serial = false;
+
  protected:
   AsyncEventSource sse;
   static void on_connect(AsyncEventSourceClient* client);
@@ -19,8 +21,10 @@ class StreamSSE {
 
   template <class T>
   void send(String channel, T value) {
-    Serial.printf("Streaming %s: ", channel.c_str());
-    Serial.println(value);
+    if (print_to_serial) {
+      Serial.printf("Streaming %s: ", channel.c_str());
+      Serial.println(value);
+    }
     send_raw(channel, (simple_json("value", value)).c_str());
   }
 };
