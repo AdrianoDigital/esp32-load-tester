@@ -2,14 +2,18 @@
 Weight/Force measurement using a load cell and a ESP32/ESP8266-microcontroller, with a web-interface.
 
 ## Example Device
-![Photo of an example device built with esp32-load-tester](doc/img/overview.jpg)
+<img alt="Photo of an example device built with esp32-load-tester" src="doc/img/overview.jpg" width="300" />
 
 ## System Overview
-![System overview diagram](doc/system_overview.drawio.svg)
+<a href="doc/system_overview.drawio.svg">
+<img alt="System overview diagram" src="doc/system_overview.drawio.svg" width=300 />
+</a>
 
 ## Construction
 ### Wiring
-![Wiring diagram for ESP32](doc/img/esp32_wiring.png)
+<a href="doc/img/esp32_wiring.png">
+<img alt="Wiring diagram for ESP32" src="doc/img/esp32_wiring.png" width=300 />
+</a>
 
 
 ### Software
