@@ -121,7 +121,11 @@ void InfoDisplay::_draw_main_weight() {
   String weight_string;
   float weight = main_weight.consume();
   // Format " 12.1", and above hundred " 561"
-  if (int(weight) <= 99) {
+  if (int(weight) > 999) {
+    num = "999";
+  } else if (int(weight) < -99) {
+    num = "-99";
+  } else if (int(weight) <= 99) {
     num = String(weight, 1);
   } else {
     num = String(weight, 0);

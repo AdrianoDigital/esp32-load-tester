@@ -76,7 +76,11 @@ void ScaleFSM::store_calibration_to_eeprom() {
 
 void ScaleFSM::setup() {
   scale.begin(HX711_DOUT_PIN, HX711_SCK_PIN);
-  set_state(t_state::READY);
+  if (AUTO_START_STREAMING) {
+    set_state(t_state::STREAM);
+  } else {
+    set_state(t_state::READY);
+  }
   load_calibration_from_eeprom();
 }
 
@@ -133,15 +137,16 @@ bool ScaleFSM::stopStreaming() {
 void ScaleFSM::handleEvents() {
   switch (state) {
     case t_state::READY:
-      if (AUTO_START_STREAMING) {
-        startStreaming();
-      }
       break;
 
     case t_state::TARE:
       if (timeout.is_over()) {
         set_error("Tare timed out");
-        set_state(t_state::READY);
+        if (AUTO_START_STREAMING) {
+          set_state(t_state::STREAM);
+        } else {
+          set_state(t_state::READY);
+        }
       }
       if (scale.is_ready()) {
         raw_averager.add(scale.read());
@@ -150,7 +155,11 @@ void ScaleFSM::handleEvents() {
                         raw_averager.average());
           scale.set_offset(raw_averager.average());
           store_calibration_to_eeprom();
-          set_state(t_state::READY);
+          if (AUTO_START_STREAMING) {
+            set_state(t_state::STREAM);
+          } else {
+            set_state(t_state::READY);
+          }
         }
       }
       break;
@@ -158,7 +167,11 @@ void ScaleFSM::handleEvents() {
     case t_state::CALIB:
       if (timeout.is_over()) {
         set_error("Calibration timed out");
-        set_state(t_state::READY);
+        if (AUTO_START_STREAMING) {
+          set_state(t_state::STREAM);
+        } else {
+          set_state(t_state::READY);
+        }
       }
       if (scale.is_ready()) {
         raw_averager.add(scale.read() - scale.get_offset());
@@ -167,7 +180,11 @@ void ScaleFSM::handleEvents() {
           Serial.printf("Calibration done, set scale to %f\n", scaling_factor);
           scale.set_scale(scaling_factor);
           store_calibration_to_eeprom();
-          set_state(t_state::READY);
+          if (AUTO_START_STREAMING) {
+            set_state(t_state::STREAM);
+          } else {
+            set_state(t_state::READY);
+          }
         }
       }
       break;
