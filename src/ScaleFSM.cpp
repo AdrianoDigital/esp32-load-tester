@@ -1,0 +1,178 @@
+#include "ScaleFSM.h"
+
+ScaleFSM::ScaleFSM(StreamSSE* stream)
+    : stream(stream),
+      scale(),
+      state(t_state::INITIALIZE),
+      calibKnownMass(1),
+      timeout(),
+      raw_averager(),
+      stream_averager(stream_average_factor) {
+  EEPROM.begin(EEPROM_EMULATION_SIZE);
+}
+
+void ScaleFSM::set_state(t_state new_state) {
+  state = new_state;
+  String stateStr = getStateString();
+  stream->send("state", stateStr);
+}
+
+void ScaleFSM::set_error(String new_error) {
+  Serial.println(new_error);
+  stream->send("fsm_error", new_error);
+}
+
+void ScaleFSM::set_measurement(float value) {
+  lastMeasurement = value;
+  stream->send("weight", lastMeasurement);
+}
+
+t_state ScaleFSM::getState() { return state; }
+
+String ScaleFSM::getStateString() {
+  switch (state) {
+    case t_state::INITIALIZE:
+      return "INITIALIZE";
+    case t_state::READY:
+      return "READY";
+    case t_state::TARE:
+      return "TARE";
+    case t_state::CALIB:
+      return "CALIB";
+    case t_state::STREAM:
+      return "STREAM";
+    default:
+      return "";
+  }
+}
+
+void ScaleFSM::load_calibration_from_eeprom() {
+  t_settings settings;
+  EEPROM.get(EEPROM_SETTINGS_ADDR, settings);
+  if (settings.magic == EEPROM_MAGIC) {
+    Serial.println("Loading calibration data from EEPROM");
+    scale.set_offset(settings.offset);
+    scale.set_scale(settings.scale);
+  } else {
+    Serial.println("No valid calibration found in EEPROM");
+  }
+}
+
+void ScaleFSM::store_calibration_to_eeprom() {
+  t_settings settings;
+  settings.magic = EEPROM_MAGIC;
+  settings.offset = scale.get_offset();
+  settings.scale = scale.get_scale();
+  EEPROM.put(EEPROM_SETTINGS_ADDR, settings);
+  Serial.println("Writing calibration data to EEPROM");
+  EEPROM.commit();
+}
+
+void ScaleFSM::setup() {
+  scale.begin(HX711_DOUT_PIN, HX711_SCK_PIN);
+  set_state(t_state::READY);
+  load_calibration_from_eeprom();
+}
+
+bool ScaleFSM::startTare() {
+  if (state == t_state::READY) {
+    Serial.println("Starting tare");
+    raw_averager = Averager<long>(tare_average_factor);
+    timeout = Timeout(tare_timeout);
+    set_state(t_state::TARE);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool ScaleFSM::startCalib(float knownMass) {
+  Averager<long> avg(3);
+  long sample = 4;
+  while (!avg.is_complete()) {
+    avg.add(sample);
+  }
+  long a = avg.average();
+  Serial.println(a);
+
+  if (state == t_state::READY) {
+    calibKnownMass = knownMass;
+    Serial.println("Starting calibration");
+    raw_averager = Averager<long>(calibration_average_factor);
+    timeout = Timeout(calib_timeout);
+    set_state(t_state::CALIB);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool ScaleFSM::startStreaming() {
+  if (state == t_state::READY) {
+    stream_averager.clear();
+    set_state(t_state::STREAM);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool ScaleFSM::stopStreaming() {
+  if (state == t_state::STREAM) {
+    set_state(t_state::READY);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void ScaleFSM::handleEvents() {
+  switch (state) {
+    case t_state::TARE:
+      if (timeout.is_over()) {
+        set_error("Tare timed out");
+        set_state(t_state::READY);
+      }
+      if (scale.is_ready()) {
+        raw_averager.add(scale.read());
+        if (raw_averager.is_complete()) {
+          Serial.printf("Tare done, set offset to %li\n",
+                        raw_averager.average());
+          scale.set_offset(raw_averager.average());
+          store_calibration_to_eeprom();
+          set_state(t_state::READY);
+        }
+      }
+      break;
+
+    case t_state::CALIB:
+      if (timeout.is_over()) {
+        set_error("Calibration timed out");
+        set_state(t_state::READY);
+      }
+      if (scale.is_ready()) {
+        raw_averager.add(scale.read() - scale.get_offset());
+        if (raw_averager.is_complete()) {
+          float scaling_factor = (float)raw_averager.average() / calibKnownMass;
+          Serial.printf("Calibration done, set scale to %f\n", scaling_factor);
+          scale.set_scale(scaling_factor);
+          store_calibration_to_eeprom();
+          set_state(t_state::READY);
+        }
+      }
+      break;
+
+    case t_state::STREAM:
+      if (scale.is_ready()) {
+        float value = scale.get_units(1);
+        stream_averager.add(value);
+        if (stream_averager.is_complete()) {
+          set_measurement(stream_averager.average());
+          stream_averager.clear();
+        }
+      }
+      break;
+    default:
+      break;
+  }
+}
