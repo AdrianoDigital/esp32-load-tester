@@ -3,6 +3,7 @@
 
 #include "StreamSSE.h"
 #include "Timeout.h"
+#include "InfoDisplay.h"
 
 class TempSens {
  private:
@@ -10,12 +11,13 @@ class TempSens {
   const unsigned long MEASUREMENT_PERIOD_MS = 5000;
 
   StreamSSE& stream;
+  InfoDisplay& info_display;
   OneWire one_wire;
   DallasTemperature dallas_temp;
   Timeout measurement_timeout;
 
  public:
-  TempSens(StreamSSE& stream);
+  TempSens(StreamSSE& stream, InfoDisplay& info_display);
   void setup();
   void handle_events();
 

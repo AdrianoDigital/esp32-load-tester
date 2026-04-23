@@ -6,6 +6,7 @@
 #include "Averager.h"
 #include "StreamSSE.h"
 #include "Timeout.h"
+#include "InfoDisplay.h"
 
 enum class t_state { INITIALIZE, READY, TARE, CALIB, STREAM };
 
@@ -30,6 +31,8 @@ class ScaleFSM {
   } t_settings;
 
   StreamSSE& stream;
+  InfoDisplay &info_display;
+
   HX711 scale;
   t_state state;
   String lastError;
@@ -48,7 +51,7 @@ class ScaleFSM {
   void store_calibration_to_eeprom();
 
  public:
-  ScaleFSM(StreamSSE &stream);
+  ScaleFSM(StreamSSE &stream, InfoDisplay &info_display);
 
   t_state getState();
   String getStateString();

@@ -16,9 +16,11 @@ class SimpleWifiAP {
   const IPAddress ap_subnet = ACCESS_POINT_SUBNET;
   const int DNS_PORT = 53;
   const int DNS_PERIOD_MS = 1000;
+  const int CLIENT_COUNT_UPDATE_PERIOD_MS = 400;
 
   DNSServer dns_server;
   Timeout dns_periodic_timeout;
+  Timeout client_counts_periodic_timeout;
   InfoDisplay& info_display;
 
   void handle_ap_station_connect();
@@ -31,30 +33,14 @@ class SimpleWifiAP {
   void handle_events();
 };
 
-void SimpleWifiAP::handle_ap_station_connect() {
-  info_display.main_clients.set(WiFi.softAPgetStationNum());
-  info_display.main_clients.set(4);
-}
-
-void SimpleWifiAP::handle_ap_station_disconnect() {
-  info_display.main_clients.set(WiFi.softAPgetStationNum());
-  info_display.main_clients.set(4);
-}
-
 SimpleWifiAP::SimpleWifiAP(InfoDisplay& info_display)
     : dns_server(),
       dns_periodic_timeout(DNS_PERIOD_MS),
+      client_counts_periodic_timeout(CLIENT_COUNT_UPDATE_PERIOD_MS),
       info_display(info_display) {}
 
 void SimpleWifiAP::setup() {
-  auto handle_ap_station_connect_binder =
-      std::bind(&SimpleWifiAP::handle_ap_station_connect, this);
-  auto handle_ap_station_disconnect_binder =
-      std::bind(&SimpleWifiAP::handle_ap_station_disconnect, this);
-
   WiFi.mode(WIFI_AP);
-  WiFi.onSoftAPModeStationConnected(handle_ap_station_connect_binder);
-  WiFi.onSoftAPModeStationDisconnected(handle_ap_station_disconnect_binder);
 
   Serial.print("Setting soft-AP configuration ... ");
   Serial.println(WiFi.softAPConfig(ap_local_ip, ap_gateway, ap_subnet)
@@ -74,5 +60,8 @@ void SimpleWifiAP::handle_events() {
   if (dns_periodic_timeout.is_over()) {
     dns_server.processNextRequest();
     dns_periodic_timeout.restart();
+  }
+  if (client_counts_periodic_timeout.is_over()) {
+    info_display.main_clients.set(WiFi.softAPgetStationNum());
   }
 }

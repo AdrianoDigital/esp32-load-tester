@@ -1,7 +1,8 @@
 #include "ScaleFSM.h"
 
-ScaleFSM::ScaleFSM(StreamSSE& stream)
+ScaleFSM::ScaleFSM(StreamSSE& stream, InfoDisplay& info_display)
     : stream(stream),
+      info_display(info_display),
       scale(),
       state(t_state::INITIALIZE),
       calibKnownMass(1),
@@ -15,6 +16,7 @@ void ScaleFSM::set_state(t_state new_state) {
   state = new_state;
   String stateStr = getStateString();
   stream.send("state", stateStr);
+  info_display.main_status.set(stateStr);
 }
 
 void ScaleFSM::set_error(String new_error) {
@@ -25,6 +27,7 @@ void ScaleFSM::set_error(String new_error) {
 void ScaleFSM::set_measurement(float value) {
   lastMeasurement = value;
   stream.send("weight", lastMeasurement);
+  info_display.main_weight.set(value);
 }
 
 t_state ScaleFSM::getState() { return state; }

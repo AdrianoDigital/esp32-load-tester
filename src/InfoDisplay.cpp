@@ -99,7 +99,7 @@ void InfoDisplay::_redraw_screen_main() {
     do_display = true;
   }
   if (main_temperature.is_modified() || main_clients.is_modified() ||
-  main_status.is_modified()) {
+      main_status.is_modified()) {
     _draw_main_status();
     do_display = true;
   }
@@ -128,7 +128,8 @@ void InfoDisplay::_draw_main_weight() {
   }
   padded = String("   ") + num;
   weight_string = padded.substring(padded.length() - 4);
-  display.fillRect(10, 1, 88, 40, SH110X_BLACK);
+  display.fillRect(10, 1, 95, 40, SH110X_BLACK);
+
   display.setFont(&FreeSansBold24pt7b);
   display.setCursor(13, 35);
   display.println(weight_string);

@@ -1,7 +1,8 @@
 #include "TempSens.h"
 
-TempSens::TempSens(StreamSSE& stream)
+TempSens::TempSens(StreamSSE& stream, InfoDisplay& info_display)
     : stream(stream),
+      info_display(info_display),
       one_wire(GPIO_ONE_WIRE_DEVICE),
       dallas_temp(&one_wire),
       measurement_timeout(MEASUREMENT_PERIOD_MS) {}
@@ -10,7 +11,9 @@ void TempSens::setup() { dallas_temp.begin(); }
 
 void TempSens::handle_events() {
   if (measurement_timeout.is_over()) {
-    stream.send("temperature", readDSTemperatureC());
+    float temperature = readDSTemperatureC();
+    stream.send("temperature", temperature);
+    info_display.main_temperature.set(temperature);
     measurement_timeout.restart();
   }
 }
