@@ -1,6 +1,12 @@
 #pragma once
 
+#ifdef ESP32
+#include <AsyncTCP.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
+#endif
+
 #include <ESPAsyncWebServer.h>
 
 #include <functional>
@@ -8,7 +14,6 @@
 #include "RestAPI.h"
 #include "ScaleFSM.h"
 #include "Timeout.h"
-
 #include "misc_utils.h"
 
 class ScaleWebAPI : public RestAPI {
@@ -27,5 +32,4 @@ class ScaleWebAPI : public RestAPI {
 
  public:
   ScaleWebAPI(AsyncWebServer& server, ScaleFSM& scale_fsm);
-
 };
