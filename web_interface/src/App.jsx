@@ -5,10 +5,6 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import { Button, ButtonGroup } from '@mui/material';
 
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
 
 import TextField from '@mui/material/TextField';
 import Dialog from '@mui/material/Dialog';
@@ -17,7 +13,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 
-import InputAdornment from '@mui/material/InputAdornment';
+
 
 import Stack from '@mui/material/Stack';
 
@@ -33,6 +29,10 @@ import { useEffect, useState } from 'react';
 import { useImmer } from 'use-immer';
 import './App.css';
 
+import CalibrationButton from './CalibrationButton';
+import BusyMessageModal from './BusyMessageModal';
+import TopBar from './TopBar';
+
 muiXTelemetrySettings.disableTelemetry();
 
 const Item = styled(Paper)(({ theme }) => ({
@@ -46,6 +46,7 @@ const Item = styled(Paper)(({ theme }) => ({
   }),
 }));
 
+
 function App() {
   // const [horizon, setHorizon] = useState(0);
   const [measurements, udpateMeasurements] = useImmer([]);
@@ -53,10 +54,8 @@ function App() {
   const [plotStartTime, setPlotStartTime] = useState(-1);
   const [error, setError] = useState("");
   const [scaleState, setScaleState] = useState("");
-  const [calibFormOpem, setCalibFormOpem] = useState(false);
-
   const [weight, setWeight] = useState(0);
-  const [temperature, setTemperature] = useState(0);
+  const [temperature, setTemperature] = useState(null);
 
   const plot_horizon = 120;
 
@@ -79,73 +78,50 @@ function App() {
     }
   };
 
+  function weightUpdate(value, timeStamp) {
+    setWeight(value);
+    if (isPlotting) {
+      // console.log("Weight: ", value, "TimeStamp: ", timeStamp, "Measurements: ", measurements.length, "start time: ", plotStartTime);
+      if (plotStartTime == -1) {
+        setPlotStartTime(timeStamp)
+      }
+      udpateMeasurements((draft) => {
+        draft.push([value, timeStamp]);
+        let i = 0;
+        while ((draft[i][1] < (timeStamp - plot_horizon)) && (i < draft.length - 1)) {
+          i++;
+        }
+        draft.splice(0, i);
+      });
+    }
+  }
 
   useEffect(() => {
     const eventSource = new EventSource("/stream");
-
-    eventSource.onopen = () => {
-      console.log("SSE /stream connected");
-    };
-
-    eventSource.onerror = (error) => {
-      console.error("SSE error: ", error);
-    };
-
-    eventSource.addEventListener(
-      "weight",
-      (event) => {
-        const data = JSON.parse(event.data);
-        const value = data["value"];
-        const timeStamp = event.timeStamp / 1000;
-        setWeight(value);
-        if (isPlotting) {
-          // console.log("Weight: ", value, "TimeStamp: ", timeStamp, "Measurements: ", measurements.length, "start time: ", plotStartTime);
-          if (plotStartTime == -1) {
-            setPlotStartTime(timeStamp)
-          }
-          udpateMeasurements((draft) => {
-            draft.push([value, timeStamp]);
-            let i = 0;
-            while ((draft[i][1] < (timeStamp - plot_horizon)) && (i < draft.length - 1)) {
-              i++;
-            }
-            draft.splice(0, i);
-          });
-        }
-      }, false,
-    );
-
-    eventSource.addEventListener(
-      "temperature",
-      (event) => {
-        const data = JSON.parse(event.data);
-        const value = data["value"];
-        const timeStamp = event.timeStamp;
-        setTemperature(value);
-      }, false,
-    );
-
-    eventSource.addEventListener(
-      "state",
-      (event) => {
-        const data = JSON.parse(event.data);
-        setScaleState(data["value"]);
-      }, false,
-    );
-
-    eventSource.addEventListener(
-      "fsm_error",
-      (event) => {
-        const data = JSON.parse(event.data);
-        setError(data["value"]);
-      }, false,
-    );
-
+    function addListener(channel, callback) {
+      eventSource.addEventListener(
+        channel,
+        (event) => {
+          const data = JSON.parse(event.data);
+          const value = data["value"];
+          const timeStamp = event.timeStamp / 1000;
+          callback(value, timeStamp);
+        }, false,
+      );
+    }
+    eventSource.onopen = () => { console.log("SSE /stream connected"); };
+    eventSource.onerror = (error) => { console.error("SSE error: ", error); };
+    addListener("weight", weightUpdate);
+    addListener("temperature", (v, t) => (setTemperature(v)));
+    addListener("state", (v, t) => (setScaleState(v)));
+    addListener("fsm_error", (v, t) => (setError(v)));
     return () => {
       eventSource.close();
       console.log("SSE /stream disconnected");
     };
   }, [isPlotting, plotStartTime]);
+
+
 
   async function api_call_start_tare() {
     await fetch('/api/v1/scale/startTare')
@@ -175,68 +151,20 @@ function App() {
       });
   };
 
-  async function api_update_scale_state() {
-    await fetch('/api/v1/scale/getState')
-      .then(response => response.json())
-      .then(json => {
-        setScaleState(json["state"])
-      })
-      .catch(error => console.error(error));
-  }
-
-  useEffect(() => {
-    api_update_scale_state();
-  }, []);
-
-
-  function handleStartTare() {
-    api_call_start_tare();
-  }
-
-  function handleClickCalib() {
-    setCalibFormOpem(true);
-  }
-  function handleCalibcClose() {
-    setCalibFormOpem(false);
-  }
-  function handleCalibSubmit(event) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const formJson = Object.fromEntries(formData.entries());
-    const known_mass = formJson.known_mass;
-    if (isNaN(known_mass)) {
-      // TODO handle error
-    } else {
-      api_call_start_calib(known_mass);
-      handleCalibcClose();
+  function getBusyOperation() {
+    switch (scaleState) {
+      case "CALIB": return "Calibrating…"; break;
+      case "TARE": return "Taring…"; break;
+      default: return ""; break;
     }
   }
 
   return (
-    <Container maxWidth="sm">
+    <Container maxWidth="md">
+      <BusyMessageModal busy={getBusyOperation()} />
+      <TopBar />
 
 
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2 }}
-          >
-            <MenuIcon />
-
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            RopeSnap
-          </Typography>
-        </Toolbar>
-      </AppBar>
-
-      <Box sx={{ flexGrow: 1 }} height="10px">
-        <p></p>
-      </Box>
       <Box sx={{ flexGrow: 1 }}>
         <Grid container spacing={2}>
           <Grid size={12}>
@@ -245,7 +173,7 @@ function App() {
                 Weight:
               </Typography>
               <Typography variant="h1" gutterBottom={true}>
-                {weight.toFixed()} kg
+                {weight == null ? "--" : weight.toFixed()} kg
               </Typography>
 
             </Item>
@@ -283,47 +211,15 @@ function App() {
           </Grid>
           <Grid size={12}>
             <Stack spacing={2} direction="row">
-              <Button variant="contained" onClick={handleStartTare}>Tare</Button>
-              <Button variant="contained" onClick={handleClickCalib}>Calibrate</Button>
-
-              <Dialog open={calibFormOpem} onClose={handleCalibcClose}>
-                <DialogTitle>Calibration</DialogTitle>
-                <DialogContent>
-                  <Stack spacing={2} direction="column">
-                    <DialogContentText>
-                      For calibration, attach a known weight to the load cell and enter it here:
-                    </DialogContentText>
-
-                    <form onSubmit={handleCalibSubmit} id="calib-form">
-                      <TextField
-                        label="Known weight"
-                        name="known_mass"
-                        sx={{ m: 1, width: '25ch' }}
-                        slotProps={{
-                          input: {
-                            endAdornment: <InputAdornment position="end">kg</InputAdornment>,
-                          },
-                        }}
-                      />
-
-                    </form>
-                  </Stack>
-
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={handleCalibcClose}>Cancel</Button>
-                  <Button type="submit" form="calib-form">
-                    Start
-                  </Button>
-                </DialogActions>
-              </Dialog>
+              <Button variant="contained" onClick={api_call_start_tare}>Tare</Button>
+              <CalibrationButton calibration={api_call_start_calib} />
             </Stack>
           </Grid>
           <Grid size={12}>
             <Item>
               <p>System Status: {scaleState}</p>
-              { error != "" ? <p>System Message: {error}</p> : ""}
-              <p>{temperature.toFixed(2)} °C</p>
+              {error != "" ? <p>System Message: {error}</p> : ""}
+              <p>{temperature == null ? "" : temperature.toFixed(2) + " °C"}</p>
             </Item>
           </Grid>
         </Grid>
