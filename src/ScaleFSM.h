@@ -1,7 +1,7 @@
 #pragma once
 
-#include <EEPROM.h>
 #include <HX711.h>
+#include <LittleFS.h>
 
 #include "Averager.h"
 #include "InfoDisplay.h"
@@ -12,9 +12,8 @@ enum class t_state { INITIALIZE, READY, TARE, CALIB, STREAM };
 
 class ScaleFSM {
  private:
-  const int EEPROM_SETTINGS_ADDR = 0;
-  const int EEPROM_EMULATION_SIZE = sizeof(t_settings);
-  const unsigned long EEPROM_MAGIC = 0xDEADBEEF;
+  const char* fn_calibration = "/calib.dat";
+  const unsigned long CALIBRATION_FILE_MAGIC = 0xDEADBEEF;
   const unsigned int TARE_TIMEOUT = 10000;
   const unsigned int CALIB_TIMEOUT = 10000;
   const unsigned int TARE_AVERAGE_FACTOR = 40;
@@ -47,8 +46,8 @@ class ScaleFSM {
   void set_error(String error);
   void set_measurement(float value);
 
-  void load_calibration_from_eeprom();
-  void store_calibration_to_eeprom();
+  void load_calibration_from_littlefs();
+  void store_calibration_to_littlefs();
 
  public:
   ScaleFSM(StreamSSE& stream, InfoDisplay& info_display, uint8_t hx711_dout_pin,

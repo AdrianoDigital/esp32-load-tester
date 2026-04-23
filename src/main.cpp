@@ -19,20 +19,26 @@ ScaleFSM scale_fsm(stream, info_display, HX711_DOUT_PIN, HX711_SCK_PIN);
 ScaleWebAPI web_api(server, scale_fsm);
 TempSens temp_sens(stream, info_display, DS18B20_PIN);
 
-void setup_static_file_server() {
+void setup_little_fs() {
   if (!LittleFS.begin()) {
     Serial.println("Failed to initialize LittleFS system");
     // TODO: proper error state handling
   }
+}
+
+void setup_static_file_server() {
   server.serveStatic("/", LittleFS, "/www/").setDefaultFile("index.html");
 }
 
 void setup() {
   info_display.setup();
   info_display.boot("Init Serial ...");
-
+  
   Serial.begin(115200);
   Serial.println();
+  
+  info_display.boot("Init LittleFS ...");
+  setup_little_fs();
 
   info_display.boot("Init temp-sensor ...");
   temp_sens.setup();

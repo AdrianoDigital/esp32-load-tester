@@ -11,9 +11,7 @@ ScaleFSM::ScaleFSM(StreamSSE& stream, InfoDisplay& info_display,
       calibKnownMass(1),
       timeout(),
       raw_averager(),
-      stream_averager(STREAM_AVERAGE_FACTOR) {
-  EEPROM.begin(EEPROM_EMULATION_SIZE);
-}
+      stream_averager(STREAM_AVERAGE_FACTOR) {}
 
 void ScaleFSM::set_state(t_state new_state) {
   state = new_state;
@@ -52,26 +50,51 @@ String ScaleFSM::getStateString() {
   }
 }
 
-void ScaleFSM::load_calibration_from_eeprom() {
+void ScaleFSM::load_calibration_from_littlefs() {
   t_settings settings;
-  EEPROM.get(EEPROM_SETTINGS_ADDR, settings);
-  if (settings.magic == EEPROM_MAGIC) {
-    Serial.println("Loading calibration data from EEPROM");
-    scale.set_offset(settings.offset);
-    scale.set_scale(settings.scale);
-  } else {
-    Serial.println("No valid calibration found in EEPROM");
-  }
+
+  if (LittleFS.exists(fn_calibration)) {
+    File file = LittleFS.open(fn_calibration, "r");
+    if (!file) {
+      Serial.println("Error: Failed to open '" + String(fn_calibration) +
+                     "' for reading.");
+      return;
+    }
+    Serial.println("Reading calibration");
+    if (!file.read((uint8_t*)&settings, sizeof(settings))) {
+      Serial.println("Error: Failed to read calibration settings");
+      return;
+    }
+    file.close();
+    if (settings.magic == CALIBRATION_FILE_MAGIC) {
+      Serial.println("Loading calibration data");
+      scale.set_offset(settings.offset);
+      scale.set_scale(settings.scale);
+    } else {
+      Serial.println("Invalid calibration settings file");
+    }
+  } 
 }
 
-void ScaleFSM::store_calibration_to_eeprom() {
+void ScaleFSM::store_calibration_to_littlefs() {
   t_settings settings;
-  settings.magic = EEPROM_MAGIC;
+
+  settings.magic = CALIBRATION_FILE_MAGIC;
   settings.offset = scale.get_offset();
   settings.scale = scale.get_scale();
-  EEPROM.put(EEPROM_SETTINGS_ADDR, settings);
-  Serial.println("Writing calibration data to EEPROM");
-  EEPROM.commit();
+
+  File file = LittleFS.open(fn_calibration, "w");
+  if (!file) {
+    Serial.println("Error: Failed to open '" + String(fn_calibration) +
+                   "' for writing.");
+    return;
+  }
+  Serial.println("Writing calibration data to littlefs");
+  if (!file.write((uint8_t*)&settings, sizeof(settings))) {
+    Serial.println("Error: Failed to write settings");
+    return;
+  }
+  file.close();
 }
 
 void ScaleFSM::setup() {
@@ -81,7 +104,7 @@ void ScaleFSM::setup() {
   } else {
     set_state(t_state::READY);
   }
-  load_calibration_from_eeprom();
+  load_calibration_from_littlefs();
 }
 
 bool ScaleFSM::startTare() {
@@ -154,7 +177,7 @@ void ScaleFSM::handleEvents() {
           Serial.printf("Tare done, set offset to %li\n",
                         raw_averager.average());
           scale.set_offset(raw_averager.average());
-          store_calibration_to_eeprom();
+          store_calibration_to_littlefs();
           if (AUTO_START_STREAMING) {
             set_state(t_state::STREAM);
           } else {
@@ -179,7 +202,7 @@ void ScaleFSM::handleEvents() {
           float scaling_factor = (float)raw_averager.average() / calibKnownMass;
           Serial.printf("Calibration done, set scale to %f\n", scaling_factor);
           scale.set_scale(scaling_factor);
-          store_calibration_to_eeprom();
+          store_calibration_to_littlefs();
           if (AUTO_START_STREAMING) {
             set_state(t_state::STREAM);
           } else {
