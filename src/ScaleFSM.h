@@ -16,17 +16,12 @@ class ScaleFSM {
   const int EEPROM_SETTINGS_ADDR = 0;
   const int EEPROM_EMULATION_SIZE = sizeof(t_settings);
   const unsigned long EEPROM_MAGIC = 0xDEADBEEF;
-  // calVal_eepromAdress = 0;
-  // 
-  // EEPROM.put(calVal_eepromAdress, newCalibrationValue);
-  // EEPROM.commit();
-  // EEPROM.get(calVal_eepromAdress, newCalibrationValue);
-  
-  const unsigned int tare_timeout = 10000;
-  const unsigned int calib_timeout = 10000;
-  const unsigned int tare_average_factor = 40;
-  const unsigned int calibration_average_factor = 40;
-  const unsigned int stream_average_factor = 10;
+  const unsigned int TARE_TIMEOUT = 10000;
+  const unsigned int CALIB_TIMEOUT = 10000;
+  const unsigned int TARE_AVERAGE_FACTOR = 40;
+  const unsigned int CALIBRATION_AVERAGE_FACTOR = 40;
+  const unsigned int STREAM_AVERAGE_FACTOR = 10;
+  const bool AUTO_START_STREAMING = true;
   
   typedef struct {
     unsigned long magic;

@@ -7,7 +7,7 @@ ScaleFSM::ScaleFSM(StreamSSE* stream)
       calibKnownMass(1),
       timeout(),
       raw_averager(),
-      stream_averager(stream_average_factor) {
+      stream_averager(STREAM_AVERAGE_FACTOR) {
   EEPROM.begin(EEPROM_EMULATION_SIZE);
 }
 
@@ -75,10 +75,13 @@ void ScaleFSM::setup() {
 }
 
 bool ScaleFSM::startTare() {
+  if (state == t_state::STREAM) {
+    stopStreaming();
+  }
   if (state == t_state::READY) {
     Serial.println("Starting tare");
-    raw_averager = Averager<long>(tare_average_factor);
-    timeout = Timeout(tare_timeout);
+    raw_averager = Averager<long>(TARE_AVERAGE_FACTOR);
+    timeout = Timeout(TARE_TIMEOUT);
     set_state(t_state::TARE);
     return true;
   } else {
@@ -87,19 +90,14 @@ bool ScaleFSM::startTare() {
 }
 
 bool ScaleFSM::startCalib(float knownMass) {
-  Averager<long> avg(3);
-  long sample = 4;
-  while (!avg.is_complete()) {
-    avg.add(sample);
+  if (state == t_state::STREAM) {
+    stopStreaming();
   }
-  long a = avg.average();
-  Serial.println(a);
-
   if (state == t_state::READY) {
     calibKnownMass = knownMass;
     Serial.println("Starting calibration");
-    raw_averager = Averager<long>(calibration_average_factor);
-    timeout = Timeout(calib_timeout);
+    raw_averager = Averager<long>(CALIBRATION_AVERAGE_FACTOR);
+    timeout = Timeout(CALIB_TIMEOUT);
     set_state(t_state::CALIB);
     return true;
   } else {
@@ -128,6 +126,12 @@ bool ScaleFSM::stopStreaming() {
 
 void ScaleFSM::handleEvents() {
   switch (state) {
+    case t_state::READY:
+      if (AUTO_START_STREAMING) {
+        startStreaming();
+      }
+      break;
+
     case t_state::TARE:
       if (timeout.is_over()) {
         set_error("Tare timed out");
