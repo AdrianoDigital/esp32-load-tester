@@ -2,6 +2,8 @@
 
 template <class T>
 class DisplayItem {
+  // Stores one value, and wether it was modified (e.g. since last display
+  // refresh)
  private:
   T value;
   bool modified;

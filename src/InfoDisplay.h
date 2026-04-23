@@ -8,8 +8,8 @@
 #include <SPI.h>
 #include <Wire.h>
 
-#include "Timeout.h"
 #include "DisplayItem.h"
+#include "Timeout.h"
 
 class InfoDisplay {
  public:
@@ -49,8 +49,8 @@ class InfoDisplay {
 
   InfoDisplay(String title);
   void setup();
-  void handle_events(bool force=false);
-  void explicit_redraw() {handle_events(true);};
+  void handle_events(bool force = false);
+  void explicit_redraw() { handle_events(true); };
 
   // Convenience functions
   void boot(String status) {
@@ -58,7 +58,7 @@ class InfoDisplay {
     boot_status.set(status);
     explicit_redraw();
   }
-  
+
   void set_screen(SCREEN new_screen) {
     if (new_screen != active_screen) {
       active_screen = new_screen;

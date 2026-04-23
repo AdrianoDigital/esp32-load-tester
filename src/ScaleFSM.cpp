@@ -73,7 +73,7 @@ void ScaleFSM::load_calibration_from_littlefs() {
     } else {
       Serial.println("Invalid calibration settings file");
     }
-  } 
+  }
 }
 
 void ScaleFSM::store_calibration_to_littlefs() {

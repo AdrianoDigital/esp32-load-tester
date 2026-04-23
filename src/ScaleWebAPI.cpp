@@ -3,24 +3,22 @@
 ScaleWebAPI::ScaleWebAPI(AsyncWebServer& server, ScaleFSM& scale_fsm)
     : RestAPI(server), scale_fsm(scale_fsm) {}
 
-
-
 void ScaleWebAPI::handle_api(AsyncWebServerRequest* request) {
   Serial.printf("handle_api, URL %s\n", request->url().c_str());
 
-    if (request->url() == "/api/v1/scale/getState") {
-      api_get_state(request);
-    } else if (request->url() == "/api/v1/scale/startTare") {
-      api_start_tare(request);
-    } else if (request->url() == "/api/v1/scale/startCalib") {
-      api_start_calib(request);
-    } else if (request->url() == "/api/v1/scale/startStream") {
-      api_start_stream(request);
-    } else if (request->url() == "/api/v1/scale/stopStream") {
-      api_stop_stream(request);
-    } else {
-      request->send(404, "text/plain", "Not found");
-    } 
+  if (request->url() == "/api/v1/scale/getState") {
+    api_get_state(request);
+  } else if (request->url() == "/api/v1/scale/startTare") {
+    api_start_tare(request);
+  } else if (request->url() == "/api/v1/scale/startCalib") {
+    api_start_calib(request);
+  } else if (request->url() == "/api/v1/scale/startStream") {
+    api_start_stream(request);
+  } else if (request->url() == "/api/v1/scale/stopStream") {
+    api_stop_stream(request);
+  } else {
+    request->send(404, "text/plain", "Not found");
+  }
 }
 
 void ScaleWebAPI::api_get_state(AsyncWebServerRequest* request) {

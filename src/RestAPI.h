@@ -5,6 +5,7 @@
 #include "misc_utils.h"
 
 class RestAPI {
+  // Base class for a REST API server with some base infrastructure
  private:
  protected:
   AsyncWebServer& server;
