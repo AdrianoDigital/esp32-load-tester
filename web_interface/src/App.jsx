@@ -321,8 +321,8 @@ function App() {
           </Grid>
           <Grid size={12}>
             <Item>
-              <p>Scale Status: {scaleState}</p>
-              <p>Error: {error}</p>
+              <p>System Status: {scaleState}</p>
+              { error != "" ? <p>System Message: {error}</p> : ""}
               <p>{temperature.toFixed(2)} °C</p>
             </Item>
           </Grid>
