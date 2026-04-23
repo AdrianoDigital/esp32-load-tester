@@ -4,16 +4,14 @@
 #include <HX711.h>
 
 #include "Averager.h"
+#include "InfoDisplay.h"
 #include "StreamSSE.h"
 #include "Timeout.h"
-#include "InfoDisplay.h"
 
 enum class t_state { INITIALIZE, READY, TARE, CALIB, STREAM };
 
 class ScaleFSM {
  private:
-  const int HX711_DOUT_PIN = 12;
-  const int HX711_SCK_PIN = 13;
   const int EEPROM_SETTINGS_ADDR = 0;
   const int EEPROM_EMULATION_SIZE = sizeof(t_settings);
   const unsigned long EEPROM_MAGIC = 0xDEADBEEF;
@@ -31,7 +29,9 @@ class ScaleFSM {
   } t_settings;
 
   StreamSSE& stream;
-  InfoDisplay &info_display;
+  InfoDisplay& info_display;
+  uint8_t hx711_dout_pin;
+  uint8_t hx711_sck_pin;
 
   HX711 scale;
   t_state state;
@@ -51,7 +51,10 @@ class ScaleFSM {
   void store_calibration_to_eeprom();
 
  public:
-  ScaleFSM(StreamSSE &stream, InfoDisplay &info_display);
+  ScaleFSM(StreamSSE& stream, InfoDisplay& info_display, uint8_t hx711_dout_pin,
+           uint8_t hx711_sck_pin
+
+  );
 
   t_state getState();
   String getStateString();

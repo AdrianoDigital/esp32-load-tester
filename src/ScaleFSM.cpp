@@ -1,8 +1,11 @@
 #include "ScaleFSM.h"
 
-ScaleFSM::ScaleFSM(StreamSSE& stream, InfoDisplay& info_display)
+ScaleFSM::ScaleFSM(StreamSSE& stream, InfoDisplay& info_display,
+                   uint8_t hx711_dout_pin, uint8_t hx711_sck_pin)
     : stream(stream),
       info_display(info_display),
+      hx711_dout_pin(hx711_dout_pin),
+      hx711_sck_pin(hx711_sck_pin),
       scale(),
       state(t_state::INITIALIZE),
       calibKnownMass(1),

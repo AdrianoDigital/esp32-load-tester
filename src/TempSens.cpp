@@ -1,9 +1,9 @@
 #include "TempSens.h"
 
-TempSens::TempSens(StreamSSE& stream, InfoDisplay& info_display)
+TempSens::TempSens(StreamSSE& stream, InfoDisplay& info_display, uint8_t ds18b20_pin)
     : stream(stream),
       info_display(info_display),
-      one_wire(GPIO_ONE_WIRE_DEVICE),
+      one_wire(ds18b20_pin),
       dallas_temp(&one_wire),
       measurement_timeout(MEASUREMENT_PERIOD_MS) {}
 

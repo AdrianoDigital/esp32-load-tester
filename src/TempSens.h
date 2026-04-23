@@ -7,7 +7,6 @@
 
 class TempSens {
  private:
-  const int GPIO_ONE_WIRE_DEVICE = 14;  // GPIO14 = D5
   const unsigned long MEASUREMENT_PERIOD_MS = 5000;
 
   StreamSSE& stream;
@@ -17,7 +16,7 @@ class TempSens {
   Timeout measurement_timeout;
 
  public:
-  TempSens(StreamSSE& stream, InfoDisplay& info_display);
+  TempSens(StreamSSE& stream, InfoDisplay& info_display, uint8_t ds18b20_pin);
   void setup();
   void handle_events();
 

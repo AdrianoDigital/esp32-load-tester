@@ -1,24 +1,23 @@
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
 
-#include <ArduinoJson.h>
-
+#include "InfoDisplay.h"
 #include "LittleFS.h"
 #include "ScaleFSM.h"
 #include "ScaleWebAPI.h"
 #include "SimpleWifiAP.h"
 #include "StreamSSE.h"
 #include "TempSens.h"
-#include "InfoDisplay.h"
 
 InfoDisplay info_display("RopeSnap");
 AsyncWebServer server(80);
 StreamSSE stream(server, "/stream");
 SimpleWifiAP wifi_ap(info_display);
-ScaleFSM scale_fsm(stream, info_display);
-ScaleWebAPI web_api(server, scale_fsm);
-TempSens temp_sens(stream, info_display);
+ScaleFSM scale_fsm(stream, info_display, HX711_DOUT_PIN, HX711_SCK_PIN);
 
+ScaleWebAPI web_api(server, scale_fsm);
+TempSens temp_sens(stream, info_display, DS18B20_PIN);
 
 void setup_static_file_server() {
   if (!LittleFS.begin()) {
@@ -31,13 +30,13 @@ void setup_static_file_server() {
 void setup() {
   info_display.setup();
   info_display.boot("Init Serial ...");
-  
+
   Serial.begin(115200);
   Serial.println();
-  
+
   info_display.boot("Init temp-sensor ...");
   temp_sens.setup();
-  
+
   info_display.boot("Init wifi ...");
   wifi_ap.setup();
   info_display.boot("Init web ...");
@@ -46,7 +45,7 @@ void setup() {
 
   info_display.boot("Init load cell ...");
   scale_fsm.setup();
-  
+
   info_display.boot("Finished booting");
   info_display.set_screen(InfoDisplay::SCREEN::MAIN);
 }
