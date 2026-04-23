@@ -12,10 +12,10 @@ void ScaleWebAPI::handle_api(AsyncWebServerRequest* request) {
     api_start_tare(request);
   } else if (request->url() == "/api/v1/scale/startCalib") {
     api_start_calib(request);
-  } else if (request->url() == "/api/v1/scale/startStream") {
-    api_start_stream(request);
-  } else if (request->url() == "/api/v1/scale/stopStream") {
-    api_stop_stream(request);
+  } else if (request->url() == "/api/v1/scale/getCalibration") {
+    api_get_calibration(request);
+  } else if (request->url() == "/api/v1/scale/setCalibration") {
+    api_set_calibration(request);
   } else {
     request->send(404, "text/plain", "Not found");
   }
@@ -25,6 +25,36 @@ void ScaleWebAPI::api_get_state(AsyncWebServerRequest* request) {
   if (assert_method_else_reply(request, HTTP_GET)) {
     request->send(200, "application/json",
                   simple_json("state", scale_fsm.getStateString()));
+  }
+}
+
+void ScaleWebAPI::api_get_calibration(AsyncWebServerRequest* request) {
+  if (assert_method_else_reply(request, HTTP_GET)) {
+    request->send(200, "application/json", scale_fsm.get_calibration_json());
+  }
+}
+
+void ScaleWebAPI::api_set_calibration(AsyncWebServerRequest* request) {
+  if (assert_method_else_reply(request, HTTP_GET)) {
+    long offset;
+    float scale;
+    bool bad_request = false;
+    if (!request->hasParam("offset") || !request->hasParam("scale")) {
+      bad_request = true;
+    } else {
+      String offset_param_string = request->getParam("offset")->value();
+      String scale_param_string = request->getParam("scale")->value();
+      offset = offset_param_string.toInt();
+      scale = scale_param_string.toFloat();
+    }
+    if (bad_request) {
+      request->send(400, "application/json",
+                    simple_json("status", "offset/scale missing or illegal"));
+    } else {
+      scale_fsm.set_calibration(offset, scale);
+      request->send(202, "application/json",
+                    simple_json("status", "Set new calibration offset/scale"));
+    }
   }
 }
 
@@ -66,32 +96,6 @@ void ScaleWebAPI::api_start_calib(AsyncWebServerRequest* request) {
             412, "application/json",
             simple_json("status", "FSM currently unable to start Calibration"));
       }
-    }
-  }
-}
-
-void ScaleWebAPI::api_start_stream(AsyncWebServerRequest* request) {
-  if (assert_method_else_reply(request, HTTP_GET)) {
-    if (scale_fsm.startStreaming()) {
-      request->send(202, "application/json",
-                    simple_json("status", "Streaming started"));
-    } else {
-      request->send(
-          412, "application/json",
-          simple_json("status", "FSM currently unable to start Streaming"));
-    }
-  }
-}
-
-void ScaleWebAPI::api_stop_stream(AsyncWebServerRequest* request) {
-  if (assert_method_else_reply(request, HTTP_GET)) {
-    if (scale_fsm.stopStreaming()) {
-      request->send(202, "application/json",
-                    simple_json("status", "Streaming stopped"));
-    } else {
-      request->send(
-          412, "application/json",
-          simple_json("status", "FSM currently unable to stop Streaming"));
     }
   }
 }

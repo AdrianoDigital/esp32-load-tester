@@ -52,7 +52,9 @@ String ScaleFSM::getStateString() {
 }
 
 void ScaleFSM::load_calibration_from_littlefs() {
-  t_settings settings;
+  String serial_json;
+  JsonDocument settings;
+  DeserializationError error;
 
   if (LittleFS.exists(fn_calibration)) {
     File file = LittleFS.open(fn_calibration, "r");
@@ -61,41 +63,55 @@ void ScaleFSM::load_calibration_from_littlefs() {
                      "' for reading.");
       return;
     }
-    Serial.println("Reading calibration");
-    if (!file.read((uint8_t*)&settings, sizeof(settings))) {
-      Serial.println("Error: Failed to read calibration settings");
+    serial_json = file.readString();
+    file.close();
+    deserializeJson(settings, serial_json);
+
+    error = deserializeJson(settings, serial_json);
+    if (error) {
+      Serial.print("Error: deserializeJson() : ");
+      Serial.println(error.c_str());
       return;
     }
-    file.close();
-    if (settings.magic == CALIBRATION_FILE_MAGIC) {
-      Serial.println("Loading calibration data");
-      scale.set_offset(settings.offset);
-      scale.set_scale(settings.scale);
-    } else {
-      Serial.println("Invalid calibration settings file");
+    if (!settings["offset"].is<long>() || !settings["scale"].is<float>()) {
+      Serial.println(
+          "Error: Calibration JSON format error (Json: " + serial_json + ")");
+      return;
     }
+    Serial.println("Loading calibration data");
+    scale.set_offset(settings["offset"]);
+    scale.set_scale(settings["scale"]);
   }
 }
 
 void ScaleFSM::store_calibration_to_littlefs() {
-  t_settings settings;
-
-  settings.magic = CALIBRATION_FILE_MAGIC;
-  settings.offset = scale.get_offset();
-  settings.scale = scale.get_scale();
-
   File file = LittleFS.open(fn_calibration, "w");
   if (!file) {
     Serial.println("Error: Failed to open '" + String(fn_calibration) +
                    "' for writing.");
     return;
   }
-  Serial.println("Writing calibration data to littlefs");
-  if (!file.write((uint8_t*)&settings, sizeof(settings))) {
+  Serial.println("Writing calibration to '" + String(fn_calibration) + "'");
+  if (!file.println(get_calibration_json())) {
     Serial.println("Error: Failed to write settings");
     return;
   }
   file.close();
+}
+
+String ScaleFSM::get_calibration_json() {
+  JsonDocument response;
+  String serialized;
+  response["offset"] = scale.get_offset();
+  response["scale"] = scale.get_scale();
+  serializeJson(response, serialized);
+  return serialized;
+}
+
+void ScaleFSM::set_calibration(const long offset, const float scale_factor) {
+  scale.set_offset(offset);
+  scale.set_scale(scale_factor);
+  store_calibration_to_littlefs();
 }
 
 void ScaleFSM::setup() {

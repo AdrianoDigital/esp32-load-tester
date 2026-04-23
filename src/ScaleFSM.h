@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ArduinoJson.h>
 #include <HX711.h>
 #include <LittleFS.h>
 
@@ -12,8 +13,7 @@ enum class t_state { INITIALIZE, READY, TARE, CALIB, STREAM };
 
 class ScaleFSM {
  private:
-  const char* fn_calibration = "/calib.dat";
-  const unsigned long CALIBRATION_FILE_MAGIC = 0xDEADBEEF;
+  const char* fn_calibration = "/calib.json";
   const unsigned int TARE_TIMEOUT = 10000;
   const unsigned int CALIB_TIMEOUT = 10000;
   const unsigned int TARE_AVERAGE_FACTOR = 40;
@@ -21,12 +21,6 @@ class ScaleFSM {
   const unsigned int STREAM_AVERAGE_FACTOR = 3;
   const bool AUTO_START_STREAMING = true;
   const long STREAM_STATE_PERIOD = 5000;
-
-  typedef struct {
-    unsigned long magic;
-    long offset;
-    float scale;
-  } t_settings;
 
   StreamSSE& stream;
   InfoDisplay& info_display;
@@ -59,6 +53,9 @@ class ScaleFSM {
 
   t_state getState();
   String getStateString();
+
+  String get_calibration_json();
+  void set_calibration(const long offset, const float scale_factor);
 
   void setup();
 

@@ -20,12 +20,12 @@ class ScaleWebAPI : public RestAPI {
  private:
   ScaleFSM& scale_fsm;
 
-  void api_stop_stream(AsyncWebServerRequest* request);
-  void api_start_stream(AsyncWebServerRequest* request);
   void api_start_calib(AsyncWebServerRequest* request);
   void api_start_tare(AsyncWebServerRequest* request);
   void api_get_last_error(AsyncWebServerRequest* request);
   void api_get_state(AsyncWebServerRequest* request);
+  void api_get_calibration(AsyncWebServerRequest* request);
+  void api_set_calibration(AsyncWebServerRequest* request);
 
  protected:
   void handle_api(AsyncWebServerRequest* request);
