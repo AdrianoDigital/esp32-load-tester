@@ -14,7 +14,7 @@
 InfoDisplay info_display("RopeSnap");
 AsyncWebServer server(80);
 StreamSSE stream(server, "/stream");
-SimpleWifiAP wifi_ap;
+SimpleWifiAP wifi_ap(info_display);
 ScaleFSM scale_fsm(&stream);
 ScaleWebAPI web_api(server, scale_fsm);
 TempSens temp_sens(&stream);
@@ -46,7 +46,8 @@ void setup() {
 
   info_display.boot("Init load cell ...");
   scale_fsm.setup();
-
+  
+  info_display.boot("Finished booting");
   info_display.set_screen(InfoDisplay::SCREEN::MAIN);
 }
 

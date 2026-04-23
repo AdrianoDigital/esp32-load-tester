@@ -4,6 +4,7 @@
 #include <DNSServer.h>
 #include <ESP8266WiFi.h>
 
+#include "InfoDisplay.h"
 #include "Timeout.h"
 
 class SimpleWifiAP {
@@ -18,22 +19,42 @@ class SimpleWifiAP {
 
   DNSServer dns_server;
   Timeout dns_periodic_timeout;
+  InfoDisplay& info_display;
+
+  void handle_ap_station_connect();
+  void handle_ap_station_disconnect();
 
  public:
-  SimpleWifiAP();
-  ~SimpleWifiAP();
+  SimpleWifiAP(InfoDisplay& info_display);
 
   void setup();
   void handle_events();
 };
 
-SimpleWifiAP::SimpleWifiAP()
-    : dns_server(), dns_periodic_timeout(DNS_PERIOD_MS) {}
+void SimpleWifiAP::handle_ap_station_connect() {
+  info_display.main_clients.set(WiFi.softAPgetStationNum());
+  info_display.main_clients.set(4);
+}
 
-SimpleWifiAP::~SimpleWifiAP() {}
+void SimpleWifiAP::handle_ap_station_disconnect() {
+  info_display.main_clients.set(WiFi.softAPgetStationNum());
+  info_display.main_clients.set(4);
+}
+
+SimpleWifiAP::SimpleWifiAP(InfoDisplay& info_display)
+    : dns_server(),
+      dns_periodic_timeout(DNS_PERIOD_MS),
+      info_display(info_display) {}
 
 void SimpleWifiAP::setup() {
+  auto handle_ap_station_connect_binder =
+      std::bind(&SimpleWifiAP::handle_ap_station_connect, this);
+  auto handle_ap_station_disconnect_binder =
+      std::bind(&SimpleWifiAP::handle_ap_station_disconnect, this);
+
   WiFi.mode(WIFI_AP);
+  WiFi.onSoftAPModeStationConnected(handle_ap_station_connect_binder);
+  WiFi.onSoftAPModeStationDisconnected(handle_ap_station_disconnect_binder);
 
   Serial.print("Setting soft-AP configuration ... ");
   Serial.println(WiFi.softAPConfig(ap_local_ip, ap_gateway, ap_subnet)
@@ -50,8 +71,8 @@ void SimpleWifiAP::setup() {
 }
 
 void SimpleWifiAP::handle_events() {
-    if(dns_periodic_timeout.is_over()) {
-        dns_server.processNextRequest();
-        dns_periodic_timeout.restart();
-    }
- }
+  if (dns_periodic_timeout.is_over()) {
+    dns_server.processNextRequest();
+    dns_periodic_timeout.restart();
+  }
+}
