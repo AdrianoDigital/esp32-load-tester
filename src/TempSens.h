@@ -1,9 +1,10 @@
 #include <DallasTemperature.h>
 #include <OneWire.h>
+#include <cmath>
 
+#include "InfoDisplay.h"
 #include "StreamSSE.h"
 #include "Timeout.h"
-#include "InfoDisplay.h"
 
 class TempSens {
  private:

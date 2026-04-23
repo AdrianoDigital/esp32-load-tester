@@ -56,6 +56,7 @@ class InfoDisplay {
   void boot(String status) {
     set_screen(InfoDisplay::SCREEN::BOOT);
     boot_status.set(status);
+    Serial.println("Boot: " + status);
     explicit_redraw();
   }
 

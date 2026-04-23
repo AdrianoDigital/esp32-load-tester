@@ -1,6 +1,7 @@
 #include "TempSens.h"
 
-TempSens::TempSens(StreamSSE& stream, InfoDisplay& info_display, uint8_t ds18b20_pin)
+TempSens::TempSens(StreamSSE& stream, InfoDisplay& info_display,
+                   uint8_t ds18b20_pin)
     : stream(stream),
       info_display(info_display),
       one_wire(ds18b20_pin),
@@ -26,7 +27,7 @@ float TempSens::readDSTemperatureC() {
 
   if (tempC == -127.00) {
     Serial.println("Failed to read from DS18B20 sensor");
-    return -999;
+    return std::nanf("");
   }
   return tempC;
 }

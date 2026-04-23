@@ -10,6 +10,7 @@ ScaleFSM::ScaleFSM(StreamSSE& stream, InfoDisplay& info_display,
       state(t_state::INITIALIZE),
       calibKnownMass(1),
       timeout(),
+      stream_state_timeout(STREAM_STATE_PERIOD),
       raw_averager(),
       stream_averager(STREAM_AVERAGE_FACTOR) {}
 
@@ -158,6 +159,11 @@ bool ScaleFSM::stopStreaming() {
 }
 
 void ScaleFSM::handleEvents() {
+  if (stream_state_timeout.is_over()) {
+    set_state(state);
+    stream_state_timeout.restart();
+  }
+
   switch (state) {
     case t_state::READY:
       break;

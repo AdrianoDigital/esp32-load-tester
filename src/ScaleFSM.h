@@ -20,6 +20,7 @@ class ScaleFSM {
   const unsigned int CALIBRATION_AVERAGE_FACTOR = 40;
   const unsigned int STREAM_AVERAGE_FACTOR = 3;
   const bool AUTO_START_STREAMING = true;
+  const long STREAM_STATE_PERIOD = 5000;
 
   typedef struct {
     unsigned long magic;
@@ -39,6 +40,7 @@ class ScaleFSM {
   float calibKnownMass;
 
   Timeout timeout;
+  Timeout stream_state_timeout;
   Averager<long> raw_averager;
   Averager<float> stream_averager;
 
