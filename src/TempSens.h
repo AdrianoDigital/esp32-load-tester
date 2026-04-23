@@ -21,5 +21,5 @@ class TempSens {
   void setup();
   void handle_events();
 
-  float readDSTemperatureC();
+  float read_temperature_c();
 };

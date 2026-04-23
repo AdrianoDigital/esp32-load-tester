@@ -12,19 +12,16 @@ void TempSens::setup() { dallas_temp.begin(); }
 
 void TempSens::handle_events() {
   if (measurement_timeout.is_over()) {
-    float temperature = readDSTemperatureC();
+    float temperature = read_temperature_c();
     stream.send("temperature", temperature);
     info_display.main_temperature.set(temperature);
     measurement_timeout.restart();
   }
 }
 
-float TempSens::readDSTemperatureC() {
-  // Call sensors.requestTemperatures() to issue a global temperature and
-  // Requests to all devices on the bus
+float TempSens::read_temperature_c() {
   dallas_temp.requestTemperatures();
   float tempC = dallas_temp.getTempCByIndex(0);
-
   if (tempC == -127.00) {
     Serial.println("Failed to read from DS18B20 sensor");
     return std::nanf("");

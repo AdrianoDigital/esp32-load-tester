@@ -57,7 +57,7 @@ void setup() {
 }
 
 void loop() {
-  scale_fsm.handleEvents();
+  scale_fsm.handle_events();
   temp_sens.handle_events();
   wifi_ap.handle_events();
   info_display.handle_events();

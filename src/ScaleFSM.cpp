@@ -8,7 +8,7 @@ ScaleFSM::ScaleFSM(StreamSSE& stream, InfoDisplay& info_display,
       hx711_sck_pin(hx711_sck_pin),
       scale(),
       state(t_state::INITIALIZE),
-      calibKnownMass(1),
+      calib_known_mass(1),
       timeout(),
       stream_state_timeout(STREAM_STATE_PERIOD),
       raw_averager(),
@@ -16,7 +16,7 @@ ScaleFSM::ScaleFSM(StreamSSE& stream, InfoDisplay& info_display,
 
 void ScaleFSM::set_state(t_state new_state) {
   state = new_state;
-  String stateStr = getStateString();
+  String stateStr = get_state_string();
   stream.send("state", stateStr);
   info_display.main_status.set(stateStr);
 }
@@ -27,14 +27,13 @@ void ScaleFSM::set_error(String new_error) {
 }
 
 void ScaleFSM::set_measurement(float value) {
-  lastMeasurement = value;
-  stream.send("weight", lastMeasurement);
+  stream.send("weight", value);
   info_display.main_weight.set(value);
 }
 
-t_state ScaleFSM::getState() { return state; }
+t_state ScaleFSM::get_state() { return state; }
 
-String ScaleFSM::getStateString() {
+String ScaleFSM::get_state_string() {
   switch (state) {
     case t_state::INITIALIZE:
       return "INITIALIZE";
@@ -116,17 +115,13 @@ void ScaleFSM::set_calibration(const long offset, const float scale_factor) {
 
 void ScaleFSM::setup() {
   scale.begin(HX711_DOUT_PIN, HX711_SCK_PIN);
-  if (AUTO_START_STREAMING) {
-    set_state(t_state::STREAM);
-  } else {
-    set_state(t_state::READY);
-  }
+  return_to_streaming();
   load_calibration_from_littlefs();
 }
 
-bool ScaleFSM::startTare() {
+bool ScaleFSM::start_tare() {
   if (state == t_state::STREAM) {
-    stopStreaming();
+    abort_streaming();
   }
   if (state == t_state::READY) {
     Serial.println("Starting tare");
@@ -139,12 +134,12 @@ bool ScaleFSM::startTare() {
   }
 }
 
-bool ScaleFSM::startCalib(float knownMass) {
+bool ScaleFSM::start_calib(float knownMass) {
   if (state == t_state::STREAM) {
-    stopStreaming();
+    abort_streaming();
   }
   if (state == t_state::READY) {
-    calibKnownMass = knownMass;
+    calib_known_mass = knownMass;
     Serial.println("Starting calibration");
     raw_averager = Averager<long>(CALIBRATION_AVERAGE_FACTOR);
     timeout = Timeout(CALIB_TIMEOUT);
@@ -155,17 +150,16 @@ bool ScaleFSM::startCalib(float knownMass) {
   }
 }
 
-bool ScaleFSM::startStreaming() {
-  if (state == t_state::READY) {
+void ScaleFSM::return_to_streaming() {
+  if (AUTO_START_STREAMING) {
     stream_averager.clear();
     set_state(t_state::STREAM);
-    return true;
   } else {
-    return false;
+    set_state(t_state::READY);
   }
 }
 
-bool ScaleFSM::stopStreaming() {
+bool ScaleFSM::abort_streaming() {
   if (state == t_state::STREAM) {
     set_state(t_state::READY);
     return true;
@@ -174,7 +168,7 @@ bool ScaleFSM::stopStreaming() {
   }
 }
 
-void ScaleFSM::handleEvents() {
+void ScaleFSM::handle_events() {
   if (stream_state_timeout.is_over()) {
     set_state(state);
     stream_state_timeout.restart();
@@ -187,11 +181,7 @@ void ScaleFSM::handleEvents() {
     case t_state::TARE:
       if (timeout.is_over()) {
         set_error("Tare timed out");
-        if (AUTO_START_STREAMING) {
-          set_state(t_state::STREAM);
-        } else {
-          set_state(t_state::READY);
-        }
+        return_to_streaming();
       }
       if (scale.is_ready()) {
         raw_averager.add(scale.read());
@@ -200,11 +190,7 @@ void ScaleFSM::handleEvents() {
                         raw_averager.average());
           scale.set_offset(raw_averager.average());
           store_calibration_to_littlefs();
-          if (AUTO_START_STREAMING) {
-            set_state(t_state::STREAM);
-          } else {
-            set_state(t_state::READY);
-          }
+          return_to_streaming();
         }
       }
       break;
@@ -212,24 +198,17 @@ void ScaleFSM::handleEvents() {
     case t_state::CALIB:
       if (timeout.is_over()) {
         set_error("Calibration timed out");
-        if (AUTO_START_STREAMING) {
-          set_state(t_state::STREAM);
-        } else {
-          set_state(t_state::READY);
-        }
+        return_to_streaming();
       }
       if (scale.is_ready()) {
         raw_averager.add(scale.read() - scale.get_offset());
         if (raw_averager.is_complete()) {
-          float scaling_factor = (float)raw_averager.average() / calibKnownMass;
+          float scaling_factor =
+              (float)raw_averager.average() / calib_known_mass;
           Serial.printf("Calibration done, set scale to %f\n", scaling_factor);
           scale.set_scale(scaling_factor);
           store_calibration_to_littlefs();
-          if (AUTO_START_STREAMING) {
-            set_state(t_state::STREAM);
-          } else {
-            set_state(t_state::READY);
-          }
+          return_to_streaming();
         }
       }
       break;

@@ -27,9 +27,6 @@ class SimpleWifiAP {
   Timeout client_counts_periodic_timeout;
   InfoDisplay& info_display;
 
-  void handle_ap_station_connect();
-  void handle_ap_station_disconnect();
-
  public:
   SimpleWifiAP(InfoDisplay& info_display);
 

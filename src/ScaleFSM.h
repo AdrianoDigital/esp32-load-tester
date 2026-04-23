@@ -29,9 +29,7 @@ class ScaleFSM {
 
   HX711 scale;
   t_state state;
-  String lastError;
-  float lastMeasurement;
-  float calibKnownMass;
+  float calib_known_mass;
 
   Timeout timeout;
   Timeout stream_state_timeout;
@@ -45,24 +43,25 @@ class ScaleFSM {
   void load_calibration_from_littlefs();
   void store_calibration_to_littlefs();
 
+  void return_to_streaming();
+  bool abort_streaming();
+  
  public:
   ScaleFSM(StreamSSE& stream, InfoDisplay& info_display, uint8_t hx711_dout_pin,
            uint8_t hx711_sck_pin
 
   );
 
-  t_state getState();
-  String getStateString();
+  t_state get_state();
+  String get_state_string();
 
   String get_calibration_json();
   void set_calibration(const long offset, const float scale_factor);
 
   void setup();
 
-  bool startTare();
-  bool startCalib(float knownMass);
-  bool startStreaming();
-  bool stopStreaming();
-
-  void handleEvents();
+  bool start_tare();
+  bool start_calib(float knownMass);
+  
+  void handle_events();
 };

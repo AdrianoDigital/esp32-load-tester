@@ -24,7 +24,7 @@ void ScaleWebAPI::handle_api(AsyncWebServerRequest* request) {
 void ScaleWebAPI::api_get_state(AsyncWebServerRequest* request) {
   if (assert_method_else_reply(request, HTTP_GET)) {
     request->send(200, "application/json",
-                  simple_json("state", scale_fsm.getStateString()));
+                  simple_json("state", scale_fsm.get_state_string()));
   }
 }
 
@@ -60,7 +60,7 @@ void ScaleWebAPI::api_set_calibration(AsyncWebServerRequest* request) {
 
 void ScaleWebAPI::api_start_tare(AsyncWebServerRequest* request) {
   if (assert_method_else_reply(request, HTTP_GET)) {
-    if (scale_fsm.startTare()) {
+    if (scale_fsm.start_tare()) {
       request->send(202, "application/json",
                     simple_json("status", "Taring started"));
     } else {
@@ -88,7 +88,7 @@ void ScaleWebAPI::api_start_calib(AsyncWebServerRequest* request) {
       request->send(400, "application/json",
                     simple_json("status", "known_mass missing or illegal"));
     } else {
-      if (scale_fsm.startCalib(known_mass)) {
+      if (scale_fsm.start_calib(known_mass)) {
         request->send(202, "application/json",
                       simple_json("status", "Calibration started"));
       } else {
