@@ -15,9 +15,9 @@ InfoDisplay info_display("RopeSnap");
 AsyncWebServer server(80);
 StreamSSE stream(server, "/stream");
 SimpleWifiAP wifi_ap(info_display);
-ScaleFSM scale_fsm(&stream);
+ScaleFSM scale_fsm(stream);
 ScaleWebAPI web_api(server, scale_fsm);
-TempSens temp_sens(&stream);
+TempSens temp_sens(stream);
 
 
 void setup_static_file_server() {

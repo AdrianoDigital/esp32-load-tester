@@ -1,6 +1,6 @@
 #include "ScaleFSM.h"
 
-ScaleFSM::ScaleFSM(StreamSSE* stream)
+ScaleFSM::ScaleFSM(StreamSSE& stream)
     : stream(stream),
       scale(),
       state(t_state::INITIALIZE),
@@ -14,17 +14,17 @@ ScaleFSM::ScaleFSM(StreamSSE* stream)
 void ScaleFSM::set_state(t_state new_state) {
   state = new_state;
   String stateStr = getStateString();
-  stream->send("state", stateStr);
+  stream.send("state", stateStr);
 }
 
 void ScaleFSM::set_error(String new_error) {
   Serial.println(new_error);
-  stream->send("fsm_error", new_error);
+  stream.send("fsm_error", new_error);
 }
 
 void ScaleFSM::set_measurement(float value) {
   lastMeasurement = value;
-  stream->send("weight", lastMeasurement);
+  stream.send("weight", lastMeasurement);
 }
 
 t_state ScaleFSM::getState() { return state; }

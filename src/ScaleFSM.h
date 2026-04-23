@@ -22,14 +22,14 @@ class ScaleFSM {
   const unsigned int CALIBRATION_AVERAGE_FACTOR = 40;
   const unsigned int STREAM_AVERAGE_FACTOR = 10;
   const bool AUTO_START_STREAMING = true;
-  
+
   typedef struct {
     unsigned long magic;
     long offset;
     float scale;
   } t_settings;
 
-  StreamSSE* stream;
+  StreamSSE& stream;
   HX711 scale;
   t_state state;
   String lastError;
@@ -48,8 +48,8 @@ class ScaleFSM {
   void store_calibration_to_eeprom();
 
  public:
-  ScaleFSM(StreamSSE* stream);
-  
+  ScaleFSM(StreamSSE &stream);
+
   t_state getState();
   String getStateString();
 
