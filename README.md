@@ -30,3 +30,8 @@ TODO
   1. Upload and Monitor
 
 
+### Case
+
+A 3d design of a case is included as FreeCAD model in `mech/case.FCStd`, and an exported STL for printing is in `mech/export/case.stl`.
+
+<img alt="Screenshot of 3d case design in FreeCAD" src="doc/img/case_v1.png" />
