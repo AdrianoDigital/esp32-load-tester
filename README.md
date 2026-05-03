@@ -117,6 +117,13 @@ Warning: This design has not been printed/verified yet.
 
 TODO: Print and verify case.
 
+#### Resources used for 3D design
+- Drawings and 3D model of [Amphenol D-Sub DE09P064TXLF](https://www.amphenol-cs.com/product/de09p064txlf.html)
+- [GOOBAY 10013 subminiature toggle switch datasheet](https://cdn-reichelt.de/documents/datenblatt/C200/GOOBAY_10013DB_DE.pdf)
+- [Spax 3x12 screw](https://www.spax.com/de-de/p/universalschraube-vollgewinde-senkkopf-kreuzschlitz-z-4cut-yellox.html?variant=1081020300123)
+- [1,3 Zoll Arduino OLED 128×64 Display](https://www.makershop.de/display/oled/oled-1-3-zoll-weiss/), mechanical drawing contained in [OLED 1.3 Datasheet / Datenblatt](https://www.makershop.de/download/datasheet-oled-13.pdf)
+- 3D model [ESP32 38 Pines ESP WROOM 32](https://grabcad.com/library/esp32-38-pines-esp-wroom-32-1) on GrabCAD. WARNING: Dimensions are wrong, model needs to be scaled. To Scale, use Part-Workbenches' _Scale_, with XScale=0.976923, ZScale=1.016000
+
 ### Build the Tensile Strength Tester
 
 A simple tensile strength tester can be built using the esp-load-tester. An example build is shown in following photo:
