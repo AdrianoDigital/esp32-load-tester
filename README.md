@@ -1,63 +1,61 @@
 # esp32-load-tester
-A simple and low-cost weight/force measurement device, based on an ESP32/ESP8266-module and a [load cell](https://en.wikipedia.org/wiki/Load_cell). It features a web-interface that allows to control and read the measurement. Additionally, a small, built-in OLED display shows the current measurement and the status of the device.
+A simple and low-cost weight/force measurement device based on an ESP32/ESP8266 module and a [load cell](https://en.wikipedia.org/wiki/Load_cell). It features a web interface that allows controlling and reading the measurement. Additionally, a small built-in OLED display shows the current measurement and the device status.
 
-It uses cheap components, only rudimentary calibration and a simple design, resulting in low accuracy (probably ± 5%), and low readout frequency (< 5Hz).
+It uses cheap components, only rudimentary calibration, and a simple design, resulting in low accuracy (approximately ±5%) and a low readout frequency (< 5 Hz).
 
-Since any [load cell](https://en.wikipedia.org/wiki/Load_cell) can be used, the magnitude of the measurement range can be selected in a wide range from few grams to multiple tons.
+Since any [load cell](https://en.wikipedia.org/wiki/Load_cell) can be used, the measurement range can be selected over a wide span, from a few grams to multiple tons.
 
 <img alt="Photo of an example device built with esp32-load-tester" src="doc/img/overview.jpg" width="250" />
 
 ## Applications
-The esp-load-tester is suited for _low-accuracy_ measurement of _slowly changing_ forces or weights. Few examples:
+The esp-load-tester is suited for _low-accuracy_ measurement of _slowly changing_ forces or weights. A few examples:
 
-- simple tensile strength testing
-- hanging scale
-- general newton meter
+- Simple tensile strength testing
+- Hanging scale
+- General Newton meter
 
 #### Example: Tensile Strength Tester
 
 <img alt="Photo of a tensile strength tester built with the esp32-load-tester" src="doc/img/rope_strength_tester.jpg" width="600" />
 <img alt="Photo of a tensile strength tester built with the esp32-load-tester" src="doc/img/screenshot_tensile_strength_test.jpg" width="200" />
 
-
 ## System Overview
 
-The force is measured using a [load cell](https://en.wikipedia.org/wiki/Load_cell). The cheap HX711 analog-digital-converter (ADC) is used for measurement of the voltage across the wheatstone bridge of the load cell. Its digital interface is read by a cheap [ESP32](https://en.wikipedia.org/wiki/ESP32) or even cheaper [ESP8266](https://en.wikipedia.org/wiki/ESP8266) micro-controller module. The ESP additionally controls a small OLED display (optional, but recommended), and a digital temperature sensor (purely optional).
+The force is measured using a [load cell](https://en.wikipedia.org/wiki/Load_cell). A low-cost HX711 analog-to-digital converter (ADC) is used to measure the voltage across the Wheatstone bridge of the load cell. Its digital interface is read by a low-cost [ESP32](https://en.wikipedia.org/wiki/ESP32) or even cheaper [ESP8266](https://en.wikipedia.org/wiki/ESP8266) microcontroller module. The ESP additionally controls a small OLED display (optional, but recommended) and a digital temperature sensor (optional).
 
-The ESP starts a WiFi access point, and up to four _clients_ can connect to this WiFi. The clients can be mobile phones, tablets or any other device with WiFi and browser. In the browser, the user opens `http://192.168.4.1/` to access the web-interface that allows to control and monitor the measurement.
+The ESP starts a Wi-Fi access point, and up to four _clients_ can connect. These clients can be mobile phones, tablets, or any other device with Wi-Fi and a browser. In the browser, the user opens `http://192.168.4.1/` to access the web interface, which allows controlling and monitoring the measurement.
 
-The WiFi uses WPA2-PSK security with a password that is configured at build time. For ease of use, a QR-code with the WiFi's SSID and password is generated. This can be printed and put on the device. Users then simply scan this QR-code to connect to the Wifi. A second QR-code linking to `http://192.168.4.1/` is also generated. 
+The Wi-Fi uses WPA2-PSK security with a password configured at build time. For ease of use, a QR code containing the Wi-Fi SSID and password is generated. This can be printed and attached to the device. Users can then simply scan the QR code to connect. A second QR code linking to `http://192.168.4.1/` is also generated.
 
-The web-interface served by a small web-server running on the ESP. The server part is kept simple and consists of a REST-API, a server-side-events (SSE) service, and a server for static files to load a [React.js](https://en.wikipedia.org/wiki/React_(software)) application to the client. The main part of the web-interface then runs on the client's browser, rendering a page with [Material Design](https://en.wikipedia.org/wiki/Material_Design), subscribing to the SSE to fetch the measurment data and plotting the data in a graph. A watchdog checks if the SSE events are coming in periodically, or otherwise indicate that state as _offline_.
+The web interface is served by a small web server running on the ESP. The server side is kept simple and consists of a REST API, a Server-Sent Events (SSE) service, and a static file server to load a [React.js](https://en.wikipedia.org/wiki/React_(software)) application on the client. The main part of the interface runs in the client’s browser, rendering a page with [Material Design](https://en.wikipedia.org/wiki/Material_Design), subscribing to SSE for measurement data, and plotting the data in a graph. A watchdog checks whether SSE events arrive periodically and otherwise shows an _offline_ state.
 
 <img alt="System overview diagram" src="doc/system_overview.drawio.svg" width=700 />
-
 
 ## Construction
 
 ### Parts
-Care has been taken to only use cheap, widely available parts. For obvious reasons no specific suppliers are listed here, but all parts are easily found via web search.
+Care has been taken to use only inexpensive, widely available parts. For obvious reasons, no specific suppliers are listed here, but all parts can easily be found via web search.
 
-At the time of writing (2026), the parts roughly summed up to around 60 € over cheap suppliers.
+At the time of writing (2026), the total cost is approximately €60 from low-cost suppliers.
 
 |Count|Item|Example|Cost|
 |-:|-|-|-:|
-|1|Load Cell|500 kg load cell|~ 30 €|
+|1|Load cell|500 kg load cell|~ 30 €|
 |2|Eye bolts|M12 eye bolts|~ 6 €|
-|1|ADC|HX711|~ 1€|
+|1|ADC|HX711|~ 1 €|
 |1|ESP32 development board|ESP32 Dev Kit C, CP2102|~ 7 €|
-|1|OLED Display (optional)|SH1106 1.3", 128x64 pixel|~ 3 €|
-|1|Temp. sensor (optional)|DS18B20|~ 1 €|
-|1|Battery Holder|4xAA/R6 battery holder|~ 1 €|
-|1|Power switch|Mini toggle switch on/off|~ 1 €|
-|1|D-Sub Plug|Female 9-pin, with case|~ 1 €|
-|1|D-Sub Plug|Male 9-pin|~ 1 €|
-|1|3D-print of case (optional)|PLA print|~ 7 €|
+|1|OLED display (optional)|SH1106 1.3", 128×64 pixels|~ 3 €|
+|1|Temperature sensor (optional)|DS18B20|~ 1 €|
+|1|Battery holder|4×AA/R6 battery holder|~ 1 €|
+|1|Power switch|Mini toggle switch (on/off)|~ 1 €|
+|1|D-Sub plug|Female 9-pin, with case|~ 1 €|
+|1|D-Sub plug|Male 9-pin|~ 1 €|
+|1|3D-printed case (optional)|PLA print|~ 7 €|
 |||||
-|||**Total w/o and with optional parts**|~ 50 - 60 €|
+|||**Total (with/without optional parts)**|~ 50–60 €|
 
 ### Wiring
-Following table shows the wiring for an common 38-pin ESP32 module (like):
+The following table shows the wiring for a common 38-pin ESP32 module:
 
 |Category|Component|Pin|<->|Component|Pin|
 |-|-|-|-|-|-|
@@ -67,8 +65,8 @@ Following table shows the wiring for an common 38-pin ESP32 module (like):
 ||ESP32|GPIO 19|<->|HX711|DT|
 ||ESP32|GPIO 18|<->|DS18B20|2 (DQ)|
 ||
-|**Power**|ESP32|Vin / 5V|<->|on/off switch|(COM)|
-||on/off switch|(A)|<->|Battery|+|
+|**Power**|ESP32|Vin / 5V|<->|On/off switch|(COM)|
+||On/off switch|(A)|<->|Battery|+|
 ||ESP32|GND|<->|Battery|-|
 ||ESP32|GND|<->|OLED|GND|
 ||ESP32|GND|<->|HX711|GND|
@@ -77,59 +75,56 @@ Following table shows the wiring for an common 38-pin ESP32 module (like):
 ||ESP32|3V3|<->|HX711|VCC|
 ||ESP32|3V3|<->|DS18B20|3 (VDD)|
 
-The following diagram shows above wiring for the example of a 38-pin ESP32 development board:
+The following diagram shows the wiring for a 38-pin ESP32 development board:
 <img alt="Wiring diagram for ESP32" src="doc/img/esp32_wiring.png" width=500 />
 
-
 ### Software
-This project is set up for development with [Platform IO](https://platformio.org/), using [Visual Studio Code](https://code.visualstudio.com) as IDE. The web-interface is built using the [Vite](https://vite.dev/) build tool, which is set up for building a [React.js](https://en.wikipedia.org/wiki/React_(software)) application. This setup was tested on [Ubuntu Linux](https://ubuntu.com/).
+This project is set up for development with [PlatformIO](https://platformio.org/) using [Visual Studio Code](https://code.visualstudio.com) as the IDE. The web interface is built using the [Vite](https://vite.dev/) build tool, configured for a [React.js](https://en.wikipedia.org/wiki/React_(software)) application. This setup was tested on Ubuntu Linux.
 
-TODO: Add instructions for other Linux distros, Windows, macOS, etc..
+TODO: Add instructions for other Linux distributions, Windows, macOS, etc.
 
 #### Prerequisites
 - [Visual Studio Code](https://code.visualstudio.com)
-- [Platform IO for VSCode](https://platformio.org/platformio-ide)
-- Python 3.12+, installed by default in Linux, for windows [install Python](https://www.python.org/downloads/)
-
+- [PlatformIO for VS Code](https://platformio.org/platformio-ide)
+- Python 3.12+ (installed by default on Linux; for Windows, see [install Python](https://www.python.org/downloads/))
 
 #### Build Instructions
 
-- Repo is set up for VSCode IDE, with PlatformIO extension
-  - Open directory in VSCode. PlatformIO should detect platformio.ini and load it automatically
-- Custom PlatformIO build targets were added, run them in this order
-  1. Generate Secrets (generates WIFI password)
-  1. Generate Wifi QR
-  1. Build web-if
-- Then run standard targets
-  1. Build Filesystem Image
-  1. Upload Filesystem Image
-  1. Build
-  1. Upload and Monitor
-
+- The repository is set up for VS Code with the PlatformIO extension  
+  - Open the directory in VS Code; PlatformIO should detect `platformio.ini` automatically
+- Custom PlatformIO build targets (run in order):
+  1. Generate secrets (creates Wi-Fi password)
+  2. Generate Wi-Fi QR code
+  3. Build web interface
+- Then run standard targets:
+  1. Build filesystem image
+  2. Upload filesystem image
+  3. Build
+  4. Upload and monitor
 
 ### Case
 
-A 3d design of a case is included as [FreeCAD](https://www.freecad.org/) model in `mech/case.FCStd`, and an exported STL for printing is in `mech/export/case.stl`.
+A 3D design of the case is included as a [FreeCAD](https://www.freecad.org/) model in `mech/case.FCStd`, with an exported STL in `mech/export/case.stl`.
 
-<img alt="Screenshot of 3d case design in FreeCAD" src="doc/img/case_v1.png" />
+<img alt="Screenshot of 3D case design in FreeCAD" src="doc/img/case_v1.png" />
 
-Warning: This design has not been printed/verified yet.
+Warning: This design has not yet been printed or verified.
 
 TODO: Print and verify case.
 
 #### Resources used for 3D design
 - Drawings and 3D model of [Amphenol D-Sub DE09P064TXLF](https://www.amphenol-cs.com/product/de09p064txlf.html)
 - [GOOBAY 10013 subminiature toggle switch datasheet](https://cdn-reichelt.de/documents/datenblatt/C200/GOOBAY_10013DB_DE.pdf)
-- [Spax 3x12 screw](https://www.spax.com/de-de/p/universalschraube-vollgewinde-senkkopf-kreuzschlitz-z-4cut-yellox.html?variant=1081020300123)
-- [1,3 Zoll Arduino OLED 128×64 Display](https://www.makershop.de/display/oled/oled-1-3-zoll-weiss/), mechanical drawing contained in [OLED 1.3 Datasheet / Datenblatt](https://www.makershop.de/download/datasheet-oled-13.pdf)
-- 3D model [ESP32 38 Pines ESP WROOM 32](https://grabcad.com/library/esp32-38-pines-esp-wroom-32-1) on GrabCAD. WARNING: Dimensions are wrong, model needs to be scaled. To Scale, use Part-Workbenches' _Scale_, with XScale=0.976923, ZScale=1.016000
+- [Spax 3×12 screw](https://www.spax.com/de-de/p/universalschraube-vollgewinde-senkkopf-kreuzschlitz-z-4cut-yellox.html?variant=1081020300123)
+- [1.3" Arduino OLED 128×64 display](https://www.makershop.de/display/oled/oled-1-3-zoll-weiss/), mechanical drawing contained in [OLED 1.3 Datasheet / Datenblatt](https://www.makershop.de/download/datasheet-oled-13.pdf)
+- 3D model [ESP32 38 Pines ESP WROOM 32](https://grabcad.com/library/esp32-38-pines-esp-wroom-32-1) 
+  WARNING: Dimensions are incorrect; scaling is required (XScale=0.976923, ZScale=1.016000)
 
 ### Build the Tensile Strength Tester
 
-A simple tensile strength tester can be built using the esp-load-tester. An example build is shown in following photo:
+A simple tensile strength tester can be built using the esp-load-tester. An example build is shown below:
 
 <img alt="Photo of a tensile strength tester built with the esp32-load-tester" src="doc/img/rope_strength_tester.jpg" width="600" />
-
 
 #### Shopping list
 
