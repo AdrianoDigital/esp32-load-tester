@@ -161,8 +161,6 @@ Designed for a standard 38-pin ESP32:
 
 <img src="doc/img/case_v1.png" />
 
-> ⚠️ Case design is **not yet physically verified**
-
 ---
 
 ## 📐 3D Design Resources
@@ -209,7 +207,6 @@ Designed for a standard 38-pin ESP32:
 ## 📌 TODO
 
 - [ ] Add cross-platform setup instructions
-- [ ] Validate 3D-printed case
 
 ---
 
