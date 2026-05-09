@@ -111,7 +111,7 @@ Designed for a standard 38-pin ESP32:
   - SDA → GPIO 21
   - SCL → GPIO 22
 - DS18B20
-  - DQ → GPIO 18, ⚠️ Pull-up? TODO
+  - DQ → GPIO 18 (pull-up active in ESP)
 
 <img src="doc/img/esp32_wiring.png" width="500" />
 
@@ -210,7 +210,6 @@ Designed for a standard 38-pin ESP32:
 
 - [ ] Add cross-platform setup instructions
 - [ ] Validate 3D-printed case
-- [ ] Double-check DS18B20 pull-up (external in prototype?)
 
 ---
 

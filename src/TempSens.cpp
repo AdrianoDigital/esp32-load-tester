@@ -6,7 +6,9 @@ TempSens::TempSens(StreamSSE& stream, InfoDisplay& info_display,
       info_display(info_display),
       one_wire(ds18b20_pin),
       dallas_temp(&one_wire),
-      measurement_timeout(MEASUREMENT_PERIOD_MS) {}
+      measurement_timeout(MEASUREMENT_PERIOD_MS) {
+        pinMode(ds18b20_pin, INPUT_PULLUP);
+      }
 
 void TempSens::setup() { dallas_temp.begin(); }
 
